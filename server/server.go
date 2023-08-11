@@ -14,6 +14,7 @@ import (
 )
 
 var db *sql.DB
+var debugFlag bool
 
 type USDBRL struct {
 	Bid string `json:"bid"`
@@ -48,7 +49,6 @@ func main() {
 
 func GetCotacao(w http.ResponseWriter, r *http.Request) {
 
-	start := time.Now()
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
 	defer cancel()
@@ -76,15 +76,12 @@ func GetCotacao(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cotacao.DBPersist()
-	cotacao.SelectAll()
+	//cotacao.SelectAll()
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(cotacao)
 
-	t := time.Now()
-	elapsed := t.Sub(start)
-	fmt.Println(elapsed)
 }
 
 func (c *Cotacao) DBPersist() {
@@ -100,7 +97,7 @@ func (c *Cotacao) DBPersist() {
 
 	_, err = stmt.ExecContext(ctx, c.CotacaoUsdBrl.Bid)
 	if err != nil {
-		panic(err)
+		log.Println("Limite de tempo para a requisição excedido! Tente novamente.")
 	}
 }
 
@@ -121,5 +118,4 @@ func (c *Cotacao) SelectAll() {
 	}
 
 	fmt.Println(cotacoes)
-
 }
